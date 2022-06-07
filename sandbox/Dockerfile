@@ -13,4 +13,3 @@ RUN apt-get install -y build-essential
 RUN apt-get install -y fpc
 RUN apt-get install -y nodejs
 RUN apt-get install -y time
-CMD /bin/bash
