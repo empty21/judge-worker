@@ -163,3 +163,5 @@ Temporary Items
 
 data
 *.log
+.env
+.env.*
