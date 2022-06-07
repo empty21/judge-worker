@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"judger/pkg/config"
 	"judger/pkg/domain"
 	"judger/pkg/runner"
 	"judger/pkg/sandbox"
@@ -17,6 +18,7 @@ import (
 )
 
 type dockerSandbox struct {
+	SandboxImage string
 }
 
 func (d dockerSandbox) Compile(runner runner.Runner, workDir string) (error, int) {
@@ -26,10 +28,10 @@ func (d dockerSandbox) Compile(runner runner.Runner, workDir string) (error, int
 		`-i`,
 		`--rm`,
 		`-v`,
-		fmt.Sprintf("%v:%v", getAbsolutePath(workDir), getPathInDocker(workDir)),
+		getMountPath(),
 		`-w`,
 		getPathInDocker(workDir),
-		`empty21/judge-sandbox`,
+		d.SandboxImage,
 	}
 	args = append(args, strings.Split(runner.GetCompileCommand(), " ")...)
 	outputFile, _ := os.Create(path.Join(workDir, "compile.out"))
@@ -42,9 +44,6 @@ func (d dockerSandbox) Compile(runner runner.Runner, workDir string) (error, int
 	cmd.Stdout = outputFile
 	cmd.Stderr = errorFile
 	err, statusCode := util.RunCommand(cmd)
-	if err != nil {
-		return err, util.DefaultFailedCode
-	}
 	return err, statusCode
 }
 
@@ -66,10 +65,10 @@ func (d dockerSandbox) Execute(runner runner.Runner, workDir string, test domain
 		`-i`,
 		`--rm`,
 		`-v`,
-		fmt.Sprintf(`%v:%v`, getAbsolutePath(workDir), getPathInDocker(workDir)),
+		getMountPath(),
 		`-w`,
 		getPathInDocker(workDir),
-		`empty21/judge-sandbox`,
+		d.SandboxImage,
 		`/usr/bin/time`,
 		`-q`,
 		`-f`,
@@ -174,6 +173,15 @@ func getAbsolutePath(p string) string {
 	return path.Join(wd, p)
 }
 
-func NewSandbox() sandbox.Sandbox {
-	return &dockerSandbox{}
+func getMountPath() string {
+	if config.Config.Runtime == "docker" {
+		return "internal-storage:/data"
+	}
+	return getAbsolutePath("data") + ":/data"
+}
+
+func NewDockerSandbox(sandboxImage string) sandbox.Sandbox {
+	return &dockerSandbox{
+		sandboxImage,
+	}
 }

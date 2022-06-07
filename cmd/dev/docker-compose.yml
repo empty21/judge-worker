@@ -1,0 +1,18 @@
+version: "3.9"
+volumes:
+  data:
+    name: internal-storage
+    external: false
+
+services:
+  judge-service:
+    image: registry.gitlab.com/itptit/go-judger
+    restart: always
+    env_file:
+      - .env.docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./logs:/app/logs
+      - type: volume
+        source: data
+        target: /app/data

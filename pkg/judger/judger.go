@@ -44,9 +44,12 @@ func (j *judger) Judge(judgeTask domain.JudgeTask) domain.JudgeTaskResult {
 		logger.Logger.Error(err)
 		return domain.NewJudgeTaskStatus(judgeTask.SubmissionId, domain.TaskStatusIE)
 	}
-	_, compileExitStatus := j.sandbox.Compile(_runner, workDir)
-	if compileExitStatus != 0 {
-		return domain.NewJudgeTaskStatus(judgeTask.SubmissionId, domain.TaskStatusCE)
+	if _runner.GetCompileCommand() != "" {
+		err, compileExitStatus := j.sandbox.Compile(_runner, workDir)
+		if compileExitStatus != 0 {
+			logger.Logger.Error(err)
+			return domain.NewJudgeTaskStatus(judgeTask.SubmissionId, domain.TaskStatusCE)
+		}
 	}
 	pullTestFromUri(judgeTask.Tests)
 	var testResults []domain.TestResult
@@ -97,5 +100,5 @@ func pullTestFromUri(tests []domain.Test) {
 
 func init() {
 	_ = os.MkdirAll("data/tests", fs.ModeDir)
-	Judger = &judger{sandbox: docker.NewSandbox()}
+	Judger = &judger{sandbox: docker.NewDockerSandbox("empty21/judge-sandbox")}
 }

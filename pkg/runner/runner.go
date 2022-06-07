@@ -40,6 +40,8 @@ func init() {
 	registerCPPRunner()
 	registerJavaRunner()
 	registerPythonRunner()
+	registerNodeRunner()
+	registerPascalRunner()
 
 	for _, r := range ListRunner {
 		MapperRunner[r.Code] = r
