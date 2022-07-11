@@ -2,11 +2,11 @@ version: "3.9"
 volumes:
   data:
     name: internal-storage
-    external: false
+    external: true
 
 services:
   judge-service:
-    image: registry.gitlab.com/itptit/go-judger
+    image: ghcr.io/empty21/go-judger
     restart: always
     env_file:
       - .env.docker

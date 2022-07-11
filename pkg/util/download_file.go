@@ -1,13 +1,26 @@
 package util
 
 import (
+	"crypto/tls"
+	"errors"
 	"io"
+	"judger/pkg/config"
 	"net/http"
 	"os"
 )
 
 func DownloadFile(path string, uri string) error {
-	resp, err := http.Get(uri)
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	req, _ := http.NewRequest(http.MethodGet, uri, nil)
+	req.Header.Set("X-API-Key", config.Config.FileAPIKey)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -21,6 +34,10 @@ func DownloadFile(path string, uri string) error {
 	defer file.Close()
 
 	// Write the body to file
-	_, err = io.Copy(file, resp.Body)
+	if resp.StatusCode == 200 {
+		_, err = io.Copy(file, resp.Body)
+	} else {
+		return errors.New("error when pulling file " + uri)
+	}
 	return err
 }

@@ -17,7 +17,7 @@ func initPublisher() {
 	if err == nil {
 		_, err = publisherChannel.QueueDeclare(
 			APIServiceQueue,
-			false,
+			true,
 			false,
 			false,
 			false,

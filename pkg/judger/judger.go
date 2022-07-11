@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"judger/pkg/domain"
 	"judger/pkg/logger"
-	"judger/pkg/redis"
 	"judger/pkg/runner"
 	"judger/pkg/sandbox"
 	"judger/pkg/sandbox/docker"
@@ -15,7 +14,7 @@ import (
 	"time"
 )
 
-const FileTTL = 3600 * 1000
+const FileCacheTTL = 30 * time.Minute
 
 var Judger *judger
 
@@ -24,7 +23,6 @@ type judger struct {
 }
 
 func (j *judger) Judge(judgeTask domain.JudgeTask) domain.JudgeTaskResult {
-	// Create submission folder if necessary
 	_runner := runner.MapperRunner[judgeTask.LanguageCode]
 	if _runner == nil {
 		logger.Logger.Error("Language not supported: ", judgeTask.LanguageCode)
@@ -51,7 +49,10 @@ func (j *judger) Judge(judgeTask domain.JudgeTask) domain.JudgeTaskResult {
 			return domain.NewJudgeTaskStatus(judgeTask.SubmissionId, domain.TaskStatusCE)
 		}
 	}
-	pullTestFromUri(judgeTask.Tests)
+	err = pullTestFromUri(judgeTask.Tests)
+	if err != nil {
+		return domain.NewJudgeTaskStatus(judgeTask.SubmissionId, domain.TaskStatusIE)
+	}
 	var testResults []domain.TestResult
 	for _, test := range judgeTask.Tests {
 		err, testResult := j.sandbox.Execute(_runner, workDir, test, judgeTask.TaskLimitation)
@@ -82,20 +83,24 @@ func postJudge(judgeTask domain.JudgeTask) {
 	}()
 }
 
-func pullTestFromUri(tests []domain.Test) {
+func pullTestFromUri(tests []domain.Test) error {
 	for _, test := range tests {
-		if redis.KeyExisted("@invalid:"+test.Uuid) || redis.KeyExisted("@valid:"+test.Uuid) {
-			continue
+		if util.FileNotExisted(fmt.Sprintf("data/tests/%v.in", test.Uuid), FileCacheTTL) {
+			err := util.DownloadFile(fmt.Sprintf("data/tests/%v.in", test.Uuid), test.InputUri)
+			if err != nil {
+				return err
+			}
 		}
-		err := util.DownloadFile(fmt.Sprintf("data/tests/%v.in", test.Uuid), test.InputUri)
-		if err == nil {
-			err = util.DownloadFile(fmt.Sprintf("data/tests/%v.out", test.Uuid), test.OutputUri)
+
+		if util.FileNotExisted(fmt.Sprintf("data/tests/%v.out", test.Uuid), FileCacheTTL) {
+			err := util.DownloadFile(fmt.Sprintf("data/tests/%v.out", test.Uuid), test.OutputUri)
+
+			if err != nil {
+				return err
+			}
 		}
-		if err != nil {
-			_ = redis.Set("@invalid:"+test.Uuid, time.Now(), FileTTL)
-		}
-		_ = redis.Set("@valid:"+test.Uuid, time.Now(), FileTTL)
 	}
+	return nil
 }
 
 func init() {

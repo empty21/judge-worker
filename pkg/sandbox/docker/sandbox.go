@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"judger/pkg/config"
 	"judger/pkg/domain"
+	"judger/pkg/logger"
 	"judger/pkg/runner"
 	"judger/pkg/sandbox"
 	"judger/pkg/util"
@@ -41,6 +42,8 @@ func (d dockerSandbox) Compile(runner runner.Runner, workDir string) (error, int
 		_ = errorFile.Close()
 	}()
 	cmd := exec.Command(command, args...)
+	logger.Logger.Info(cmd.String())
+
 	cmd.Stdout = outputFile
 	cmd.Stderr = errorFile
 	err, statusCode := util.RunCommand(cmd)
@@ -82,6 +85,8 @@ func (d dockerSandbox) Execute(runner runner.Runner, workDir string, test domain
 	outputFile, _ := os.Create(path.Join(workDir, "/tests/"+test.Uuid+".out"))
 	errorFile, _ := os.Create(path.Join(workDir, "/tests/"+test.Uuid+".err"))
 	cmd := exec.Command(command, args...)
+	logger.Logger.Info(cmd.String())
+
 	cmd.Stdout = outputFile
 	cmd.Stderr = errorFile
 	inputFile, err := os.Open(fmt.Sprintf("data/tests/%v.in", test.Uuid))
@@ -131,7 +136,7 @@ func judgeByOutput(workDir string, t *domain.TestResult) {
 	if err != nil {
 		return
 	}
-	if bytes.Compare(bytes.TrimSpace(actualOutput), bytes.TrimSpace(expectedOutput)) == 0 {
+	if strings.Compare(string(bytes.TrimSpace(actualOutput)), string(bytes.TrimSpace(expectedOutput))) == 0 {
 		t.Result = domain.TestResultAC
 	} else {
 		t.Result = domain.TestResultWA
@@ -181,6 +186,11 @@ func getMountPath() string {
 }
 
 func NewDockerSandbox(sandboxImage string) sandbox.Sandbox {
+	err := exec.Command("docker", "pull", sandboxImage).Run()
+	if err != nil {
+		logger.Logger.Error("Error when pulling sandbox")
+	}
+
 	return &dockerSandbox{
 		sandboxImage,
 	}

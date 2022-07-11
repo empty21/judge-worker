@@ -14,14 +14,14 @@ func init() {
 	client = redis.NewClient(&redis.Options{
 		Addr:     config.Config.RedisUri,
 		Password: config.Config.RedisPassword,
-		DB:       10,
+		DB:       config.Config.RedisDatabase,
 	})
 }
 
-func Get(key string) string {
+func Get(key string) interface{} {
 	value, err := client.Get(ctx, key).Result()
 	if err != nil {
-		return ""
+		return nil
 	}
 	return value
 }
@@ -36,5 +36,9 @@ func Set(key string, value interface{}, ttl int) error {
 
 func KeyExisted(key string) bool {
 	value := Get(key)
-	return value != ""
+	return value != nil
+}
+
+func WithMachineID(key string) string {
+	return config.Config.MachineId + "/" + key
 }
