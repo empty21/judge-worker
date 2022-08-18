@@ -42,7 +42,6 @@ func (d dockerSandbox) Compile(runner runner.Runner, workDir string) (error, int
 		_ = errorFile.Close()
 	}()
 	cmd := exec.Command(command, args...)
-	logger.Logger.Info(cmd.String())
 
 	cmd.Stdout = outputFile
 	cmd.Stderr = errorFile
@@ -85,7 +84,6 @@ func (d dockerSandbox) Execute(runner runner.Runner, workDir string, test domain
 	outputFile, _ := os.Create(path.Join(workDir, "/tests/"+test.Uuid+".out"))
 	errorFile, _ := os.Create(path.Join(workDir, "/tests/"+test.Uuid+".err"))
 	cmd := exec.Command(command, args...)
-	logger.Logger.Info(cmd.String())
 
 	cmd.Stdout = outputFile
 	cmd.Stderr = errorFile
@@ -136,7 +134,7 @@ func judgeByOutput(workDir string, t *domain.TestResult) {
 	if err != nil {
 		return
 	}
-	if strings.Compare(string(bytes.TrimSpace(actualOutput)), string(bytes.TrimSpace(expectedOutput))) == 0 {
+	if strings.Compare(normalizeLineBreaker(string(bytes.TrimSpace(actualOutput))), normalizeLineBreaker(string(bytes.TrimSpace(expectedOutput)))) == 0 {
 		t.Result = domain.TestResultAC
 	} else {
 		t.Result = domain.TestResultWA
@@ -183,6 +181,11 @@ func getMountPath() string {
 		return "internal-storage:/data"
 	}
 	return getAbsolutePath("data") + ":/data"
+}
+
+func normalizeLineBreaker(s string) string {
+	replacer := strings.NewReplacer("\r\n", "\n", "\r", "\n")
+	return replacer.Replace(s)
 }
 
 func NewDockerSandbox(sandboxImage string) sandbox.Sandbox {
