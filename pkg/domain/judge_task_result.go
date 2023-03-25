@@ -14,13 +14,12 @@ const (
 	TestResultWA                 = "WA"
 	TestResultRTE                = "RTE"
 	TestResultTLE                = "TLE"
-	TestResultIE                 = "IE"
 )
 
 type JudgeTaskResult struct {
-	SubmissionId int64          `json:"submissionId"`
-	Status       TaskStatusEnum `json:"status,omitempty"`
-	Tests        []TestResult   `json:"tests,omitempty"`
+	Uid    string         `json:"uid"`
+	Status TaskStatusEnum `json:"status,omitempty"`
+	Tests  []TestResult   `json:"tests,omitempty"`
 }
 
 type TestResult struct {
@@ -30,16 +29,16 @@ type TestResult struct {
 	Time     float64        `json:"time"`
 }
 
-func NewJudgeTaskStatus(submissionId int64, status TaskStatusEnum) JudgeTaskResult {
+func NewJudgeTaskStatus(uid string, status TaskStatusEnum) JudgeTaskResult {
 	return JudgeTaskResult{
-		SubmissionId: submissionId,
-		Status:       status,
+		Uid:    uid,
+		Status: status,
 	}
 }
 
-func NewJudgeTaskResult(submissionId int64, tests []TestResult) JudgeTaskResult {
+func NewJudgeTaskResult(uid string, tests []TestResult) JudgeTaskResult {
 	return JudgeTaskResult{
-		SubmissionId: submissionId,
-		Tests:        tests,
+		Uid:   uid,
+		Tests: tests,
 	}
 }

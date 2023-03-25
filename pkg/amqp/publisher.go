@@ -16,7 +16,7 @@ func initPublisher() {
 	}
 	if err == nil {
 		_, err = publisherChannel.QueueDeclare(
-			APIServiceQueue,
+			config.Config.ResultQueue,
 			true,
 			false,
 			false,
@@ -36,7 +36,7 @@ func initPublisher() {
 		)
 	}
 	if err == nil {
-		err = publisherChannel.QueueBind(APIServiceQueue, JudgeTaskUpdate, "common", false, nil)
+		err = publisherChannel.QueueBind(config.Config.ResultQueue, JudgeTaskUpdate, "common", false, nil)
 	}
 	if err != nil {
 		panic(err)

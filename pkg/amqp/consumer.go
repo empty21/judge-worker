@@ -19,7 +19,7 @@ func initConsumer() {
 	}
 	if err == nil {
 		_, err = consumerChannel.QueueDeclare(
-			JudgerServiceQueue,
+			config.Config.JobQueue,
 			true,
 			false,
 			false,
@@ -29,7 +29,7 @@ func initConsumer() {
 	}
 	if err == nil {
 		messages, err = consumerChannel.Consume(
-			JudgerServiceQueue,
+			config.Config.JobQueue,
 			"",
 			false,
 			false,

@@ -6,7 +6,7 @@ type TaskLimitation struct {
 }
 
 type JudgeTask struct {
-	SubmissionId int64  `json:"submissionId"`
+	Uid          string `json:"uid"`
 	Source       string `json:"source"`
 	LanguageCode string `json:"languageCode"`
 	TaskLimitation

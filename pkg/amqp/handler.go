@@ -34,7 +34,7 @@ func handleJudgeMessage(message []byte) error {
 	}
 	err = Publish(JudgeTaskUpdate, Message{
 		Pattern: JudgeTaskUpdate,
-		Data:    domain.NewJudgeTaskStatus(data.SubmissionId, domain.TaskStatusIP),
+		Data:    domain.NewJudgeTaskStatus(data.Uid, domain.TaskStatusIP),
 	})
 	if err != nil {
 		return err
