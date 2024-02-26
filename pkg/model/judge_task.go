@@ -1,4 +1,4 @@
-package domain
+package model
 
 type TaskLimitation struct {
 	TimeLimit   float64 `json:"timeLimit"`
@@ -6,15 +6,16 @@ type TaskLimitation struct {
 }
 
 type JudgeTask struct {
-	Uid          string `json:"uid"`
+	Identifier   string `json:"identifier"`
 	Source       string `json:"source"`
 	LanguageCode string `json:"languageCode"`
+	Tests        []Test `json:"tests"`
 	TaskLimitation
-	Tests []Test `json:"tests"`
 }
 
 type Test struct {
-	Uuid      string `json:"uuid"`
-	InputUri  string `json:"inputUri"`
-	OutputUri string `json:"outputUri"`
+	Identifier string `json:"identifier"`
+	InputUri   string `json:"inputUri"`
+	OutputUri  string `json:"outputUri"`
+	TaskLimitation
 }

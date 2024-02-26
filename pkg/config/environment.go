@@ -1,29 +1,21 @@
 package config
 
-import (
-	"github.com/Netflix/go-env"
-	"github.com/joho/godotenv"
-	"judger/pkg/logger"
-)
+import "github.com/jinzhu/configor"
 
-type config struct {
-	Runtime     string `env:"RUNTIME"`
-	FileAPIKey  string `env:"FILE_API_KEY,required=true"`
-	AMQPUri     string `env:"AMQP_URI,required=true"`
-	TGBotToken  string `env:"TG_BOT_TOKEN"`
-	TGChatId    int64  `env:"TG_CHAT_ID"`
-	JobQueue    string `env:"JOB_QUEUE,required=true"`
-	ResultQueue string `env:"RESULT_QUEUE,required=true"`
+type _Config struct {
+	AMQPUri          string `env:"AMQP_URI" yaml:"AMQPUri" required:"true"`
+	Debug            bool   `env:"DEBUG" yaml:"Debug" default:"false"`
+	LogLevel         string `env:"LOG_LEVEL" yaml:"LogLevel" default:"info"`
+	Sandbox          string `env:"SANDBOX" yaml:"Sandbox" default:"docker"`
+	TelegramBotToken string `env:"TELEGRAM_BOT_TOKEN" yaml:"TelegramBotToken"`
+	TelegramChatID   int64  `env:"TELEGRAM_CHAT_ID" yaml:"TelegramChatID"`
 }
 
-var Config config
+var Config _Config
 
 func init() {
-	_ = godotenv.Load()
-	_, err := env.UnmarshalFromEnviron(&Config)
-	logger.Logger.Info("Runtime environment: ", Config.Runtime)
-
+	err := configor.Load(&Config, "config.yml")
 	if err != nil {
-		logger.Logger.Fatal("Reading configuration from environment failed:", err)
+		panic(err)
 	}
 }

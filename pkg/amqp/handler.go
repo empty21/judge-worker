@@ -3,49 +3,38 @@ package amqp
 import (
 	"encoding/json"
 	"errors"
-	"github.com/streadway/amqp"
-	"judger/pkg/domain"
+	amqp "github.com/rabbitmq/amqp091-go"
+	"judger/pkg/config"
 	"judger/pkg/judger"
+	"judger/pkg/log"
+	"judger/pkg/model"
 )
 
-func handleMessage(message amqp.Delivery) error {
-	var msg Message
-	err := json.Unmarshal(message.Body, &msg)
-	if err != nil {
-		return err
+func handleMessage(messages <-chan amqp.Delivery) {
+	for message := range messages {
+		log.Info("Received message: %s", message.Body)
+		switch message.RoutingKey {
+		case config.TaskQueueName:
+			_ = handleJudgeMessage(message.Body)
+			break
+		default:
+			_ = errors.New("no handler registered")
+		}
+		_ = message.Ack(false)
 	}
-	switch msg.Pattern {
-	case JudgeTaskNew:
-		err = handleJudgeMessage(message.Body)
-		break
-	default:
-		return errors.New("no handler registered")
-	}
-	return err
 }
 
 func handleJudgeMessage(message []byte) error {
-	var msg Message
-	var data = &domain.JudgeTask{}
-	msg.Data = data
-	err := json.Unmarshal(message, &msg)
+	var task = &model.JudgeTask{}
+	err := json.Unmarshal(message, &task)
 	if err != nil {
 		return err
 	}
-	err = Publish(JudgeTaskUpdate, Message{
-		Pattern: JudgeTaskUpdate,
-		Data:    domain.NewJudgeTaskStatus(data.Uid, domain.TaskStatusIP),
-	})
+	err = Publish(config.ResultQueueName, model.NewJudgeTaskStatus(task.Identifier, config.TaskStatusIP, ""))
 	if err != nil {
 		return err
 	}
-	result := judger.Judger.Judge(*data)
-	err = Publish(JudgeTaskUpdate, Message{
-		Pattern: JudgeTaskUpdate,
-		Data:    result,
-	})
-	if err != nil {
-		return err
-	}
-	return nil
+	result := judger.Judger.Judge(*task)
+	err = Publish(config.ResultQueueName, result)
+	return err
 }

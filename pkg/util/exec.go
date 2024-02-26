@@ -1,21 +1,20 @@
 package util
 
-import "os/exec"
-
-const (
-	DefaultSuccessCode    = 0
-	DefaultFailedCode     = 1
-	TimeLimitExceededCode = 124
+import (
+	"errors"
+	"judger/pkg/config"
+	"os/exec"
 )
 
 func RunCommand(c *exec.Cmd) (error, int) {
 	err := c.Run()
 	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
 			return err, exitErr.ExitCode()
 		}
-		return err, DefaultFailedCode
+		return err, config.ExitCodeError
 	}
 
-	return nil, DefaultSuccessCode
+	return nil, config.ExitCodeSuccess
 }

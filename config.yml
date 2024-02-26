@@ -1,0 +1,8 @@
+AMQPUri: "amqp://root:bnUpRRYPASwrcZAs@localhost:5001/judge"
+LogLevel: "debug"
+Debug: true
+Sandbox: "podman"
+
+# For telegram file archiving
+TelegramBotToken: ""
+TelegramChatID: ""
